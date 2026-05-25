@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Roll & Brew — Board Game Café, Dubai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --ink:#1A1208;
+  --parchment:#F4ECD8;
+  --amber:#C8860A;
+  --amber-light:#614515;
+  --amber-glow:rgba(200,134,10,0.18);
+  --rust:#8B3A1C;
+  --cream:#FAF5E8;
+  --muted-text:#8A7355;
+  --card-bg:#231A0D;
+  --card-border:rgba(200,134,10,0.22);
+  --green-felt:#2D5016;
+  --green-felt-light:#3A6B1E;
+}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Crimson Pro',serif;
+  background:var(--ink);
+  color:var(--parchment);
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* NOISE OVERLAY */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:1000;opacity:0.35;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--ink);}
+::-webkit-scrollbar-thumb{background:var(--amber);border-radius:2px;}
+
+/* ===== CUSTOM CURSOR ===== */
+.cursor{
+  width:22px;height:22px;border:1.5px solid var(--amber);
+  border-radius:50%;position:fixed;pointer-events:none;z-index:9999;
+  transition:transform 0.15s,opacity 0.2s;
+  mix-blend-mode:difference;
+  transform:translate(-50%,-50%);
+}
+
+/* ===== NAV ===== */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.2rem 3.5rem;
+  background:linear-gradient(to bottom, rgba(26,18,8,0.97) 0%, rgba(26,18,8,0) 100%);
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;
+  font-size:1.4rem;font-style:italic;font-weight:700;
+  color:var(--amber-light);text-decoration:none;
+  letter-spacing:0.02em;
+}
+.nav-logo sup{font-size:0.55em;color:var(--muted-text);vertical-align:super;font-style:normal;}
+.nav-links{display:flex;gap:2.4rem;list-style:none;}
+.nav-links a{
+  font-family:'Space Mono',monospace;
+  font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--muted-text);text-decoration:none;transition:color 0.25s;
+}
+.nav-links a:hover{color:var(--amber-light);}
+.nav-book{
+  font-family:'Space Mono',monospace;
+  font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;
+  padding:0.55rem 1.4rem;
+  border:1px solid var(--amber);color:var(--amber);
+  background:transparent;cursor:pointer;
+  transition:all 0.25s;text-decoration:none;
+}
+.nav-book:hover{background:var(--amber);color:var(--ink);}
+
+/* ===== HERO ===== */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 4rem 5rem;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,134,10,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 70% at 80% 60%, rgba(139,58,28,0.12) 0%, transparent 55%),
+    linear-gradient(to bottom, #1A1208 0%, #0E0B05 100%);
+}
+/* Scattered decorative dice */
+.dice-bg{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;
+}
+.die{
+  position:absolute;
+  font-size:4rem;opacity:0.04;
+  animation:spin-slow var(--dur,20s) linear infinite;
+  color:var(--amber);
+}
+.die:nth-child(1){top:8%;left:7%;font-size:6rem;--dur:25s;}
+.die:nth-child(2){top:20%;right:12%;font-size:3rem;--dur:18s;animation-direction:reverse;}
+.die:nth-child(3){top:55%;left:3%;font-size:5rem;--dur:30s;}
+.die:nth-child(4){top:40%;right:5%;font-size:4.5rem;--dur:22s;animation-direction:reverse;}
+.die:nth-child(5){top:75%;left:20%;font-size:3.5rem;--dur:27s;}
+.die:nth-child(6){top:15%;left:45%;font-size:8rem;--dur:35s;animation-direction:reverse;}
+@keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* Floating card suits */
+.suits{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.suit{
+  position:absolute;font-size:1.5rem;
+  opacity:0;color:var(--amber);
+  animation:rise var(--dur2,8s) ease-in-out infinite;
+  animation-delay:var(--del,0s);
+}
+@keyframes rise{
+  0%{opacity:0;transform:translateY(0) rotate(var(--rot,0deg));}
+  20%{opacity:0.06;}
+  80%{opacity:0.04;}
+  100%{opacity:0;transform:translateY(-120vh) rotate(calc(var(--rot,0deg) + 180deg));}
+}
+
+.hero-label{
+  position:relative;z-index:2;
+  font-family:'Space Mono',monospace;
+  font-size:0.68rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:1.6rem;
+  display:flex;align-items:center;gap:12px;
+}
+.hero-label::before{content:'⚄';font-size:1rem;}
+
+.hero-title{
+  position:relative;z-index:2;
+  font-family:'Playfair Display',serif;
+  font-size:clamp(4rem,10vw,9.5rem);
+  font-weight:900;line-height:0.9;
+  letter-spacing:-0.02em;
+  margin-bottom:2rem;
+}
+.hero-title .line1{display:block;color:var(--parchment);}
+.hero-title .line2{display:block;color:var(--amber-light);font-style:italic;}
+.hero-title .line3{
+  display:block;color:transparent;
+  -webkit-text-stroke:1px rgba(244,236,216,0.25);
+}
+.hero-tagline{
+  position:relative;z-index:2;
+  font-size:1.2rem;color:var(--muted-text);
+  line-height:1.75;max-width:480px;
+  margin-bottom:3rem;font-style:italic;
+  font-weight:300;
+}
+.hero-actions{position:relative;z-index:2;display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;}
+.btn-amber{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:1rem 2.2rem;background:var(--amber);
+  font-family:'Space Mono',monospace;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;border:none;cursor:pointer;
+  transition:background 0.25s,transform 0.1s;
+}
+.btn-amber:hover{background:var(--amber-light);transform:translateY(-2px);}
+.btn-outline-amber{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:1rem 2.2rem;background:transparent;
+  font-family:'Space Mono',monospace;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--amber);text-decoration:none;
+  border:1px solid rgba(200,134,10,0.4);cursor:pointer;
+  transition:all 0.25s;
+}
+.btn-outline-amber:hover{border-color:var(--amber);background:rgba(200,134,10,0.08);}
+
+.hero-stats{
+  position:relative;z-index:2;
+  display:flex;gap:3rem;margin-top:3.5rem;
+  padding-top:2rem;border-top:1px solid rgba(200,134,10,0.15);
+}
+.hs-num{
+  font-family:'Playfair Display',serif;
+  font-size:2.8rem;font-weight:900;color:var(--amber-light);line-height:1;
+}
+.hs-label{font-size:0.78rem;color:var(--muted-text);margin-top:4px;font-style:italic;}
+
+/* Scroll cue */
+.scroll-cue{
+  position:absolute;bottom:2.5rem;right:3.5rem;z-index:2;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  font-family:'Space Mono',monospace;font-size:0.6rem;
+  letter-spacing:0.2em;color:var(--muted-text);text-transform:uppercase;
+}
+.scroll-line{width:1px;height:50px;background:linear-gradient(to bottom,var(--amber),transparent);animation:scroll-drop 2s ease-in-out infinite;}
+@keyframes scroll-drop{0%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}51%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+
+/* ===== ANNOUNCEMENT BAR ===== */
+.announce{
+  background:var(--amber);padding:0.7rem 0;
+  overflow:hidden;white-space:nowrap;
+}
+.announce-track{display:inline-flex;animation:ticker 25s linear infinite;}
+.at{
+  font-family:'Space Mono',monospace;
+  font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--ink);padding:0 2.5rem;font-weight:700;
+}
+.at-sep{opacity:0.4;}
+@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ===== SECTIONS ===== */
+.sec{padding:7rem 4rem;}
+.sec-felt{
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(45,80,22,0.15) 0%, transparent 70%),
+    linear-gradient(to bottom, var(--ink), #110D06, var(--ink));
+}
+.sec-parchment{
+  background:var(--parchment);color:var(--ink);
+  position:relative;overflow:hidden;
+}
+.sec-parchment::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C8860A' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Section headers */
+.stag{
+  font-family:'Space Mono',monospace;
+  font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:1rem;
+  display:flex;align-items:center;gap:10px;
+}
+.stag::before{content:'';width:20px;height:1px;background:var(--amber);}
+.sh{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.5rem,5vw,4rem);
+  font-weight:900;line-height:1.0;
+  letter-spacing:-0.01em;margin-bottom:0.8rem;
+}
+.sh em{font-style:italic;color:var(--amber-light);}
+.sh-dark{color:var(--ink);}
+.sh-dark em{color:var(--rust);}
+.ssub{font-size:1rem;line-height:1.75;max-width:480px;font-weight:300;font-style:italic;}
+.ssub-dark{color:#5A4A35;}
+
+/* ===== GAME LIBRARY ===== */
+.games-header{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;margin-bottom:2.5rem;}
+.game-filters{display:flex;gap:8px;flex-wrap:wrap;}
+.gf{
+  padding:7px 18px;border:1px solid rgba(200,134,10,0.25);
+  font-family:'Space Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--muted-text);background:transparent;cursor:pointer;
+  transition:all 0.2s;
+}
+.gf.active,.gf:hover{background:var(--amber);color:var(--ink);border-color:var(--amber);}
+
+.games-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.game-card{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  padding:1.4rem 1.2rem;
+  position:relative;overflow:hidden;
+  cursor:pointer;transition:border-color 0.25s,transform 0.2s;
+  display:flex;flex-direction:column;
+}
+.game-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--amber);transform:scaleX(0);transform-origin:left;
+  transition:transform 0.3s;
+}
+.game-card:hover{border-color:rgba(200,134,10,0.5);transform:translateY(-3px);}
+.game-card:hover::before{transform:scaleX(1);}
+.game-card.hidden{display:none;}
+.gc-emoji{font-size:2.2rem;margin-bottom:1rem;display:block;}
+.gc-players{
+  font-family:'Space Mono',monospace;font-size:0.58rem;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:0.5rem;
+}
+.gc-name{
+  font-family:'Playfair Display',serif;
+  font-size:1.05rem;font-weight:700;color:var(--parchment);
+  margin-bottom:0.4rem;
+}
+.gc-desc{font-size:0.82rem;color:var(--muted-text);line-height:1.6;flex:1;margin-bottom:1rem;}
+.gc-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.gc-tag{
+  font-size:0.6rem;padding:2px 7px;
+  border:1px solid rgba(200,134,10,0.2);
+  color:var(--muted-text);
+  font-family:'Space Mono',monospace;letter-spacing:0.05em;text-transform:uppercase;
+}
+.gc-tag.easy{border-color:rgba(45,180,22,0.3);color:#5aaa3a;}
+.gc-tag.medium{border-color:rgba(200,134,10,0.4);color:var(--amber);}
+.gc-tag.hard{border-color:rgba(180,40,20,0.4);color:#c84020;}
+.gc-featured{
+  position:absolute;top:10px;right:10px;
+  font-family:'Space Mono',monospace;
+  font-size:0.55rem;letter-spacing:0.1em;
+  padding:2px 6px;background:var(--amber);color:var(--ink);font-weight:700;text-transform:uppercase;
+}
+
+/* ===== MENU ===== */
+.menu-layout{display:grid;grid-template-columns:280px 1fr;gap:0;min-height:600px;}
+.menu-nav{
+  background:#1A1208;
+  border-right:1px solid rgba(200,134,10,0.15);
+  padding:2.5rem 0;
+  display:flex;flex-direction:column;
+  position:sticky;top:0;
+}
+.menu-nav-title{
+  font-family:'Playfair Display',serif;
+  font-size:0.9rem;font-style:italic;color:var(--muted-text);
+  padding:0 2rem 1.5rem;
+  border-bottom:1px solid rgba(200,134,10,0.1);
+  margin-bottom:1rem;
+}
+.mn-item{
+  padding:1rem 2rem;font-family:'Crimson Pro',serif;
+  font-size:1rem;color:var(--muted-text);cursor:pointer;
+  transition:all 0.2s;display:flex;align-items:center;gap:10px;
+  border-left:2px solid transparent;
+}
+.mn-item:hover,.mn-item.active{
+  color:var(--parchment);border-left-color:var(--amber);
+  background:rgba(200,134,10,0.05);
+}
+.mn-item .mn-icon{font-size:1.1rem;width:24px;text-align:center;}
+.menu-content{padding:2.5rem 3rem;overflow-y:auto;}
+.menu-panel{display:none;}
+.menu-panel.active{display:block;}
+.menu-panel-title{
+  font-family:'Playfair Display',serif;
+  font-size:2rem;font-style:italic;font-weight:700;
+  color:var(--amber-light);margin-bottom:0.4rem;
+}
+.menu-panel-sub{font-size:0.9rem;color:var(--muted-text);margin-bottom:2rem;font-style:italic;}
+.menu-items{display:flex;flex-direction:column;gap:1px;}
+.mi{
+  display:flex;align-items:flex-start;gap:1rem;
+  padding:1.2rem 0;border-bottom:1px solid rgba(200,134,10,0.08);
+  transition:background 0.15s;
+  cursor:default;
+}
+.mi:last-child{border-bottom:none;}
+.mi:hover{background:rgba(200,134,10,0.03);}
+.mi-info{flex:1;}
+.mi-name{
+  font-family:'Playfair Display',serif;
+  font-size:1rem;font-weight:700;color:var(--parchment);margin-bottom:3px;
+}
+.mi-desc{font-size:0.82rem;color:var(--muted-text);line-height:1.6;font-style:italic;}
+.mi-tags{display:flex;gap:6px;margin-top:6px;}
+.mi-tag{font-size:0.6rem;padding:1px 6px;border:1px solid rgba(200,134,10,0.2);color:var(--muted-text);font-family:'Space Mono',monospace;text-transform:uppercase;}
+.mi-tag.v{border-color:rgba(45,180,22,0.3);color:#5aaa3a;}
+.mi-price{
+  font-family:'Playfair Display',serif;
+  font-size:1rem;font-weight:700;color:var(--amber);
+  white-space:nowrap;margin-top:2px;
+}
+
+/* ===== BOOKING ===== */
+.booking-wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.booking-left{
+  background:#0E0B05;
+  padding:5rem 4rem;
+  border-right:1px solid rgba(200,134,10,0.12);
+}
+.booking-right{
+  background:#0A0705;
+  padding:5rem 4rem;
+}
+.booking-form{margin-top:2.5rem;display:flex;flex-direction:column;gap:1.4rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{
+  font-family:'Space Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--amber);
+}
+.form-input,.form-select{
+  background:rgba(200,134,10,0.05);
+  border:1px solid rgba(200,134,10,0.2);
+  padding:0.8rem 1rem;
+  font-family:'Crimson Pro',serif;font-size:1rem;
+  color:var(--parchment);outline:none;
+  transition:border-color 0.2s;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.form-input::placeholder{color:rgba(200,134,10,0.3);}
+.form-input:focus,.form-select:focus{border-color:var(--amber);}
+.form-select option{background:var(--ink);color:var(--parchment);}
+
+/* Time slots */
+.time-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:0.5rem;}
+.ts{
+  padding:0.6rem;text-align:center;
+  border:1px solid rgba(200,134,10,0.2);
+  font-family:'Space Mono',monospace;font-size:0.65rem;
+  color:var(--muted-text);cursor:pointer;transition:all 0.2s;
+}
+.ts:hover:not(.unavail){border-color:var(--amber);color:var(--amber);}
+.ts.selected{background:var(--amber);color:var(--ink);border-color:var(--amber);font-weight:700;}
+.ts.unavail{opacity:0.3;cursor:not-allowed;text-decoration:line-through;}
+
+/* Table picker */
+.table-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:0.5rem;}
+.table-opt{
+  padding:1rem 0.8rem;
+  border:1px solid rgba(200,134,10,0.2);
+  text-align:center;cursor:pointer;transition:all 0.2s;
+}
+.table-opt:hover{border-color:var(--amber);}
+.table-opt.selected{background:rgba(200,134,10,0.1);border-color:var(--amber);}
+.to-emoji{font-size:1.5rem;display:block;margin-bottom:5px;}
+.to-label{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--muted-text);text-transform:uppercase;}
+
+/* Order summary */
+.order-summary{
+  background:rgba(200,134,10,0.05);
+  border:1px solid rgba(200,134,10,0.15);
+  padding:2rem;margin-top:2rem;
+}
+.os-title{
+  font-family:'Playfair Display',serif;
+  font-size:1.1rem;font-style:italic;color:var(--amber-light);
+  margin-bottom:1.2rem;
+}
+.os-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;}
+.os-key{font-size:0.82rem;color:var(--muted-text);font-style:italic;}
+.os-val{font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--parchment);}
+.os-total{
+  margin-top:1rem;padding-top:1rem;
+  border-top:1px solid rgba(200,134,10,0.2);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.os-total-key{font-size:0.9rem;color:var(--parchment);font-weight:600;}
+.os-total-val{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--amber-light);}
+
+/* Fee Note */
+.fee-note{
+  margin-top:1.5rem;padding:1rem;
+  border-left:2px solid var(--amber);
+  background:rgba(200,134,10,0.04);
+}
+.fee-note p{font-size:0.82rem;color:var(--muted-text);line-height:1.6;font-style:italic;}
+.fee-note strong{color:var(--parchment);}
+
+/* ===== EXPERIENCE SECTION ===== */
+.exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:3.5rem;}
+.exp-card{
+  background:var(--card-bg);border:1px solid var(--card-border);
+  padding:2.5rem 2rem;position:relative;overflow:hidden;
+}
+.exp-card::after{
+  content:'';position:absolute;bottom:-20px;right:-20px;
+  width:100px;height:100px;border-radius:50%;
+  background:radial-gradient(circle, rgba(200,134,10,0.06) 0%, transparent 70%);
+}
+.exp-num{
+  font-family:'Playfair Display',serif;
+  font-size:4rem;font-weight:900;
+  color:rgba(200,134,10,0.1);line-height:1;
+  margin-bottom:0.5rem;
+}
+.exp-icon{font-size:2rem;display:block;margin-bottom:1rem;}
+.exp-title{
+  font-family:'Playfair Display',serif;
+  font-size:1.2rem;font-weight:700;color:var(--parchment);
+  margin-bottom:0.6rem;
+}
+.exp-desc{font-size:0.88rem;color:var(--muted-text);line-height:1.7;font-style:italic;}
+
+/* ===== TESTIMONIALS ===== */
+.test-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:3rem;}
+.test-card{
+  padding:2rem;position:relative;
+  border-bottom:2px solid rgba(139,58,28,0.3);
+}
+.test-card::before{
+  content:'"';
+  font-family:'Playfair Display',serif;
+  font-size:5rem;font-weight:900;color:rgba(200,134,10,0.12);
+  position:absolute;top:-0.5rem;left:1.5rem;line-height:1;
+}
+.test-stars{color:var(--amber);font-size:0.9rem;letter-spacing:0.05em;margin-bottom:0.8rem;}
+.test-text{
+  font-size:0.95rem;color:#5A4A35;line-height:1.75;
+  font-style:italic;margin-bottom:1.5rem;
+}
+.test-author{display:flex;align-items:center;gap:10px;}
+.test-av{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--rust);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:0.9rem;font-weight:700;color:var(--parchment);
+  flex-shrink:0;
+}
+.test-name{font-size:0.88rem;font-weight:600;color:var(--ink);}
+.test-role{font-size:0.75rem;color:#9A8060;}
+
+/* ===== MAP CONTACT ===== */
+.contact-wrap{display:grid;grid-template-columns:1fr 1.4fr;gap:0;}
+.contact-info{
+  background:#0E0B05;padding:5rem 4rem;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.c-items{display:flex;flex-direction:column;gap:1.6rem;margin-top:2.5rem;}
+.c-item{display:flex;gap:14px;align-items:flex-start;}
+.c-icon-box{
+  width:38px;height:38px;flex-shrink:0;
+  border:1px solid rgba(200,134,10,0.2);
+  background:rgba(200,134,10,0.06);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--amber);font-size:0.9rem;
+}
+.c-label{font-family:'Space Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--amber);margin-bottom:3px;}
+.c-value{font-size:0.92rem;color:var(--muted-text);line-height:1.6;}
+.c-btns{display:flex;flex-direction:column;gap:10px;margin-top:2.5rem;}
+.wa-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:0.9rem 1.8rem;background:#25D366;
+  font-family:'Space Mono',monospace;font-size:0.68rem;
+  letter-spacing:0.1em;text-transform:uppercase;font-weight:700;
+  color:white;text-decoration:none;transition:background 0.2s;
+}
+.wa-btn:hover{background:#1ebe5d;}
+.call-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:0.9rem 1.8rem;background:transparent;
+  font-family:'Space Mono',monospace;font-size:0.68rem;
+  letter-spacing:0.1em;text-transform:uppercase;font-weight:700;
+  color:var(--muted-text);text-decoration:none;
+  border:1px solid rgba(200,134,10,0.2);transition:all 0.2s;
+}
+.call-btn:hover{border-color:var(--amber);color:var(--amber);}
+.map-right{min-height:600px;}
+.map-right iframe{width:100%;height:100%;border:none;display:block;}
+
+/* ===== FLOAT WA ===== */
+.wa-float{
+  position:fixed;bottom:2rem;right:2rem;z-index:600;
+  width:56px;height:56px;border-radius:50%;background:#25D366;
+  display:flex;align-items:center;justify-content:center;
+  text-decoration:none;color:white;
+  box-shadow:0 4px 24px rgba(37,211,102,0.4);
+  animation:wapulse 3s ease-in-out infinite;
+  transition:transform 0.2s;
+}
+.wa-float:hover{transform:scale(1.1);}
+@keyframes wapulse{0%,100%{box-shadow:0 4px 24px rgba(37,211,102,0.4);}50%{box-shadow:0 4px 40px rgba(37,211,102,0.65);}}
+
+/* ===== FOOTER ===== */
+footer{
+  background:#0A0705;
+  border-top:1px solid rgba(200,134,10,0.12);
+  padding:3rem 4rem;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1.5rem;
+}
+.footer-logo{
+  font-family:'Playfair Display',serif;
+  font-size:1.2rem;font-style:italic;color:var(--amber-light);
+  text-decoration:none;
+}
+.footer-links{display:flex;gap:2rem;list-style:none;}
+.footer-links a{
+  font-family:'Space Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--muted-text);text-decoration:none;transition:color 0.2s;
+}
+.footer-links a:hover{color:var(--amber);}
+.footer-copy{font-size:0.78rem;color:rgba(244,236,216,0.2);font-style:italic;}
+
+/* ===== SCROLL ANIMATIONS ===== */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.8s cubic-bezier(0.22,1,0.36,1),transform 0.8s cubic-bezier(0.22,1,0.36,1);}
+.reveal.visible{opacity:1;transform:none;}
+.reveal-left{opacity:0;transform:translateX(-30px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal-left.visible{opacity:1;transform:none;}
+.reveal-right{opacity:0;transform:translateX(30px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal-right.visible{opacity:1;transform:none;}
+
+/* ===== MOBILE ===== */
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem;}
+  .nav-links{display:none;}
+  .hero{padding:0 1.5rem 4rem;}
+  .sec{padding:4rem 1.5rem;}
+  .games-grid{grid-template-columns:repeat(2,1fr);}
+  .menu-layout{grid-template-columns:1fr;}
+  .menu-nav{flex-direction:row;overflow-x:auto;padding:1rem;border-right:none;border-bottom:1px solid rgba(200,134,10,0.15);}
+  .booking-wrap,.contact-wrap{grid-template-columns:1fr;}
+  .exp-grid,.test-grid{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .time-slots{grid-template-columns:repeat(3,1fr);}
+  footer{flex-direction:column;padding:2rem 1.5rem;}
+  .map-right{min-height:300px;}
+  .hero-stats{gap:1.5rem;flex-wrap:wrap;}
+  .cursor{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">The Roll & Brew<sup>™</sup></a>
+  <ul class="nav-links">
+    <li><a href="#games">Games</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#booking">Book a Table</a></li>
+    <li><a href="#contact">Find Us</a></li>
+  </ul>
+  <a href="#booking" class="nav-book">Reserve Now</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="dice-bg">
+    <span class="die">⚀</span><span class="die">⚄</span>
+    <span class="die">⚂</span><span class="die">⚅</span>
+    <span class="die">⚃</span><span class="die">⚁</span>
+  </div>
+  <div class="suits">
+    <span class="suit" style="left:10%;bottom:0;--dur2:10s;--del:0s;--rot:-15deg;">♠</span>
+    <span class="suit" style="left:30%;bottom:0;--dur2:14s;--del:2s;--rot:10deg;">♥</span>
+    <span class="suit" style="left:55%;bottom:0;--dur2:11s;--del:4s;--rot:-8deg;">♦</span>
+    <span class="suit" style="left:75%;bottom:0;--dur2:13s;--del:1s;--rot:20deg;">♣</span>
+    <span class="suit" style="left:20%;bottom:0;--dur2:16s;--del:6s;--rot:-5deg;">⚄</span>
+    <span class="suit" style="left:88%;bottom:0;--dur2:9s;--del:3s;--rot:12deg;">♠</span>
+  </div>
+
+  <div class="hero-label">Muwaileh · Sharjah · Est. 2024</div>
+  <h1 class="hero-title">
+    <span class="line1">Roll the</span>
+    <span class="line2">Dice,</span>
+    <span class="line3">Sip & Play</span>
+  </h1>
+  <p class="hero-tagline">800+ board games, artisan brews, and a community of players. Your next favourite evening starts here.</p>
+  <div class="hero-actions">
+    <a href="#booking" class="btn-amber">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Reserve a Table
+    </a>
+    <a href="#games" class="btn-outline-amber">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      Browse Games
+    </a>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-num">800+</div><div class="hs-label">Board games</div></div>
+    <div><div class="hs-num">5.0★</div><div class="hs-label">Google rating</div></div>
+    <div><div class="hs-num">4 hrs</div><div class="hs-label">Avg. stay</div></div>
+    <div><div class="hs-num">1,224</div><div class="hs-label">Reviews</div></div>
+  </div>
+  <div class="scroll-cue">Scroll<div class="scroll-line"></div></div>
+</section>
+
+<!-- ANNOUNCE BAR -->
+<div class="announce">
+  <div class="announce-track">
+    <span class="at">Game Masters on duty from 6pm <span class="at-sep">✦</span></span>
+    <span class="at">Unlimited games with table booking <span class="at-sep">✦</span></span>
+    <span class="at">Kids welcome from 10am weekends <span class="at-sep">✦</span></span>
+    <span class="at">Tournament every Friday 8pm <span class="at-sep">✦</span></span>
+    <span class="at">Free Wi-Fi · Indoor seating <span class="at-sep">✦</span></span>
+    <span class="at">Game Masters on duty from 6pm <span class="at-sep">✦</span></span>
+    <span class="at">Unlimited games with table booking <span class="at-sep">✦</span></span>
+    <span class="at">Kids welcome from 10am weekends <span class="at-sep">✦</span></span>
+    <span class="at">Tournament every Friday 8pm <span class="at-sep">✦</span></span>
+    <span class="at">Free Wi-Fi · Indoor seating <span class="at-sep">✦</span></span>
+  </div>
+</div>
+
+<!-- GAME LIBRARY -->
+<section class="sec sec-felt" id="games">
+  <div class="games-header reveal">
+    <div>
+      <div class="stag">The Vault</div>
+      <h2 class="sh">800+ Games.<br><em>Zero Boredom.</em></h2>
+      <p class="ssub">From quick card games to epic strategy battles — our Game Masters will help you find your next obsession.</p>
+    </div>
+    <div class="game-filters">
+      <button class="gf active" onclick="filterGames('all',this)">All</button>
+      <button class="gf" onclick="filterGames('strategy',this)">Strategy</button>
+      <button class="gf" onclick="filterGames('party',this)">Party</button>
+      <button class="gf" onclick="filterGames('family',this)">Family</button>
+      <button class="gf" onclick="filterGames('coop',this)">Co-op</button>
+    </div>
+  </div>
+  <div class="games-grid reveal" id="gamesGrid">
+    <div class="game-card" data-cat="strategy">
+      <span class="gc-emoji">🏰</span>
+      <div class="gc-players">2–4 players · 90–180 min</div>
+      <div class="gc-name">Catan</div>
+      <p class="gc-desc">Build settlements, trade resources, and outsmart your opponents on the ever-changing island of Catan.</p>
+      <div class="gc-tags"><span class="gc-tag medium">Medium</span><span class="gc-tag">Strategy</span><span class="gc-tag">Trading</span></div>
+      <div class="gc-featured">⭐ Popular</div>
+    </div>
+    <div class="game-card" data-cat="party">
+      <span class="gc-emoji">🎭</span>
+      <div class="gc-players">2–10 players · 30–60 min</div>
+      <div class="gc-name">Codenames</div>
+      <p class="gc-desc">Give one-word clues to guide your team to the right words. Spy-themed word game with heart-pumping moments.</p>
+      <div class="gc-tags"><span class="gc-tag easy">Easy</span><span class="gc-tag">Party</span><span class="gc-tag">Words</span></div>
+    </div>
+    <div class="game-card" data-cat="coop">
+      <span class="gc-emoji">🦠</span>
+      <div class="gc-players">2–4 players · 45–60 min</div>
+      <div class="gc-name">Pandemic</div>
+      <p class="gc-desc">Race against the clock to stop four deadly diseases from spreading across the world. Pure co-operative tension.</p>
+      <div class="gc-tags"><span class="gc-tag medium">Medium</span><span class="gc-tag">Co-op</span><span class="gc-tag">Strategy</span></div>
+      <div class="gc-featured">⭐ Staff Pick</div>
+    </div>
+    <div class="game-card" data-cat="party">
+      <span class="gc-emoji">🃏</span>
+      <div class="gc-players">3–8 players · 20–30 min</div>
+      <div class="gc-name">Exploding Kittens</div>
+      <p class="gc-desc">Draw cards, avoid the exploding kitten, and sabotage your friends. Ridiculous, fast and absolutely hilarious.</p>
+      <div class="gc-tags"><span class="gc-tag easy">Easy</span><span class="gc-tag">Party</span><span class="gc-tag">Card</span></div>
+    </div>
+    <div class="game-card" data-cat="strategy">
+      <span class="gc-emoji">🗺️</span>
+      <div class="gc-players">1–4 players · 60–120 min</div>
+      <div class="gc-name">Ticket to Ride</div>
+      <p class="gc-desc">Claim railway routes across continents, connect cities, and block your rivals. A gateway strategy classic.</p>
+      <div class="gc-tags"><span class="gc-tag easy">Easy</span><span class="gc-tag">Strategy</span><span class="gc-tag">Family</span></div>
+    </div>
+    <div class="game-card" data-cat="family">
+      <span class="gc-emoji">🐉</span>
+      <div class="gc-players">2–6 players · 45–75 min</div>
+      <div class="gc-name">Dixit</div>
+      <p class="gc-desc">Describe dreamy illustrated cards with poetic clues. Wildly creative, perfect for all ages and artistic souls.</p>
+      <div class="gc-tags"><span class="gc-tag easy">Easy</span><span class="gc-tag">Creative</span><span class="gc-tag">Family</span></div>
+      <div class="gc-featured">⭐ Family Fave</div>
+    </div>
+    <div class="game-card" data-cat="coop">
+      <span class="gc-emoji">🕵️</span>
+      <div class="gc-players">2–6 players · 60–90 min</div>
+      <div class="gc-name">Mysterium</div>
+      <p class="gc-desc">One player is a ghost sending cryptic dream visions. Can the psychics solve the murder before dawn?</p>
+      <div class="gc-tags"><span class="gc-tag medium">Medium</span><span class="gc-tag">Co-op</span><span class="gc-tag">Mystery</span></div>
+    </div>
+    <div class="game-card" data-cat="strategy">
+      <span class="gc-emoji">⚔️</span>
+      <div class="gc-players">2–4 players · 120–180 min</div>
+      <div class="gc-name">Scythe</div>
+      <p class="gc-desc">Alternate-history 1920s Europe. Engine-building, area control, and stunning artwork in one epic package.</p>
+      <div class="gc-tags"><span class="gc-tag hard">Hard</span><span class="gc-tag">Epic</span><span class="gc-tag">Strategy</span></div>
+    </div>
+  </div>
+  <div class="reveal" style="text-align:center;margin-top:2.5rem;">
+    <p style="font-style:italic;color:var(--muted-text);font-size:0.92rem;">Showing 8 of 800+ games · Ask our Game Master for recommendations</p>
+  </div>
+</section>
+
+<!-- FOOD & DRINKS MENU -->
+<section class="sec" id="menu" style="padding:0;">
+  <div style="padding:4rem 4rem 0;">
+    <div class="stag reveal">The Kitchen & Bar</div>
+    <h2 class="sh reveal">Eat, Drink, <em>Conquer</em></h2>
+    <p class="ssub reveal" style="margin-bottom:2.5rem;">Great games deserve great food. Everything made fresh — from artisan coffee to loaded sharing plates.</p>
+  </div>
+  <div class="menu-layout">
+    <div class="menu-nav">
+      <div class="menu-nav-title">— Browse Menu —</div>
+      <div class="mn-item active" onclick="showMenu('hot',this)"><span class="mn-icon">☕</span> Hot Drinks</div>
+      <div class="mn-item" onclick="showMenu('cold',this)"><span class="mn-icon">🧃</span> Cold Drinks</div>
+      <div class="mn-item" onclick="showMenu('bites',this)"><span class="mn-icon">🍟</span> Snacks & Bites</div>
+      <div class="mn-item" onclick="showMenu('mains',this)"><span class="mn-icon">🍔</span> Mains</div>
+      <div class="mn-item" onclick="showMenu('sharing',this)"><span class="mn-icon">🍕</span> Sharing Plates</div>
+      <div class="mn-item" onclick="showMenu('desserts',this)"><span class="mn-icon">🍰</span> Desserts</div>
+    </div>
+    <div class="menu-content">
+
+      <!-- HOT DRINKS -->
+      <div class="menu-panel active" id="menu-hot">
+        <div class="menu-panel-title">Hot Drinks</div>
+        <div class="menu-panel-sub">All drinks served with a complimentary game suggestion card</div>
+        <div class="menu-items">
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">The Game Master's Karak</div>
+              <div class="mi-desc">Our legendary spiced milk tea, brewed low and slow with cardamom, cinnamon and fresh ginger. The fuel of champions.</div>
+              <div class="mi-tags"><span class="mi-tag v">Bestseller</span></div>
+            </div>
+            <div class="mi-price">AED 18</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Flat White</div>
+              <div class="mi-desc">Double ristretto, silky microfoam. Made with our house-roasted single origin beans from Ethiopia.</div>
+            </div>
+            <div class="mi-price">AED 22</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Dirty Matcha Latte</div>
+              <div class="mi-desc">Ceremonial grade matcha with an espresso shot underneath. For when you need to win and stay focused.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegan</span></div>
+            </div>
+            <div class="mi-price">AED 28</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">V60 Pour Over</div>
+              <div class="mi-desc">Single-origin filter coffee, brewed to order. Notes of caramel and dark cherry. Ask the barista for today's origin.</div>
+            </div>
+            <div class="mi-price">AED 30</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Hot Chocolate "Dungeon Edition"</div>
+              <div class="mi-desc">Belgian dark chocolate, steamed oat milk, topped with toasted marshmallows and gold dust. Pure comfort.</div>
+            </div>
+            <div class="mi-price">AED 32</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLD DRINKS -->
+      <div class="menu-panel" id="menu-cold">
+        <div class="menu-panel-title">Cold Drinks</div>
+        <div class="menu-panel-sub">Freshly made to order — zero powders, zero syrups</div>
+        <div class="menu-items">
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Lemon Mint Mojito</div>
+              <div class="mi-desc">Fresh lemon, muddled mint, sparkling water, a touch of honey. The table favourite.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegan</span><span class="mi-tag v">Bestseller</span></div>
+            </div>
+            <div class="mi-price">AED 22</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Mango Tango</div>
+              <div class="mi-desc">Alphonso mango, fresh lime, basil seeds, topped with soda. Sweet, sharp, and deeply refreshing.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegan</span></div>
+            </div>
+            <div class="mi-price">AED 26</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Iced Brown Sugar Latte</div>
+              <div class="mi-desc">Espresso shaken with brown sugar syrup over ice, topped with oat milk cold foam.</div>
+            </div>
+            <div class="mi-price">AED 30</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Hibiscus Rose Cooler</div>
+              <div class="mi-desc">Hibiscus tea, rose water, fresh raspberry and elderflower tonic. Non-alcoholic and gorgeous.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegan</span></div>
+            </div>
+            <div class="mi-price">AED 28</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SNACKS -->
+      <div class="menu-panel" id="menu-bites">
+        <div class="menu-panel-title">Snacks & Bites</div>
+        <div class="menu-panel-sub">Quick bites perfect between rounds</div>
+        <div class="menu-items">
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Loaded Waffle Fries</div>
+              <div class="mi-desc">Crispy waffle fries, cheddar sauce, jalapeños, crispy onions, sour cream. The table clearer.</div>
+            </div>
+            <div class="mi-price">AED 38</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Mezze Board</div>
+              <div class="mi-desc">Hummus, baba ghanoush, tabbouleh, falafel, warm pita. Feeds 2–3 players happily.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegan</span></div>
+            </div>
+            <div class="mi-price">AED 55</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Crispy Chicken Sliders (x3)</div>
+              <div class="mi-desc">Buttermilk fried chicken, sriracha mayo, pickled slaw on brioche buns. One bite, gone.</div>
+            </div>
+            <div class="mi-price">AED 48</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Truffle Parmesan Popcorn</div>
+              <div class="mi-desc">House-popped corn tossed in truffle oil, aged parmesan and sea salt. The dangerous one.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegetarian</span></div>
+            </div>
+            <div class="mi-price">AED 28</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAINS -->
+      <div class="menu-panel" id="menu-mains">
+        <div class="menu-panel-title">Mains</div>
+        <div class="menu-panel-sub">Proper meals — because a 4-hour session demands proper fuel</div>
+        <div class="menu-items">
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">The Double Agent Burger</div>
+              <div class="mi-desc">Double smash patty, American cheese, secret sauce, caramelised onions, brioche bun. Served with fries.</div>
+              <div class="mi-tags"><span class="mi-tag v">Bestseller</span></div>
+            </div>
+            <div class="mi-price">AED 68</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Club Sandwich — "The Diplomat"</div>
+              <div class="mi-desc">Triple-decker with grilled chicken, egg, cheddar, turkey bacon, tomato and truffle mayo.</div>
+            </div>
+            <div class="mi-price">AED 58</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Grilled Halloumi Wrap</div>
+              <div class="mi-desc">Grilled halloumi, roasted peppers, rocket, pomegranate molasses in warm saj bread.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegetarian</span></div>
+            </div>
+            <div class="mi-price">AED 52</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHARING -->
+      <div class="menu-panel" id="menu-sharing">
+        <div class="menu-panel-title">Sharing Plates</div>
+        <div class="menu-panel-sub">For the whole table — order big, share bigger</div>
+        <div class="menu-items">
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Game Night Platter (4–6 pax)</div>
+              <div class="mi-desc">Wings, sliders, waffle fries, onion rings, halloumi sticks with four dipping sauces. The ultimate share.</div>
+              <div class="mi-tags"><span class="mi-tag v">Bestseller</span></div>
+            </div>
+            <div class="mi-price">AED 145</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Pizza — "The Wild Card"</div>
+              <div class="mi-desc">12" sourdough base, changing toppings daily. Ask the server — could be anything from BBQ chicken to truffle mushroom.</div>
+            </div>
+            <div class="mi-price">AED 75</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Nachos Grande</div>
+              <div class="mi-desc">Corn tortilla chips, cheese sauce, pico de gallo, guacamole, jalapeños, sour cream. Big enough for 3–4.</div>
+              <div class="mi-tags"><span class="mi-tag v">Vegetarian</span></div>
+            </div>
+            <div class="mi-price">AED 65</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESSERTS -->
+      <div class="menu-panel" id="menu-desserts">
+        <div class="menu-panel-title">Desserts</div>
+        <div class="menu-panel-sub">The victory lap — celebrate your win (or drown your loss)</div>
+        <div class="menu-items">
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Molten Lava Cake</div>
+              <div class="mi-desc">Warm dark chocolate cake, liquid centre, vanilla bean ice cream. Ready in 12 minutes — order early.</div>
+              <div class="mi-tags"><span class="mi-tag v">Bestseller</span></div>
+            </div>
+            <div class="mi-price">AED 42</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Belgian Waffle Tower</div>
+              <div class="mi-desc">Stack of three waffles, lotus biscoff spread, caramel drizzle, fresh banana, whipped cream.</div>
+            </div>
+            <div class="mi-price">AED 48</div>
+          </div>
+          <div class="mi">
+            <div class="mi-info">
+              <div class="mi-name">Date & Caramel Sticky Toffee Pudding</div>
+              <div class="mi-desc">A UAE twist on the British classic. Medjool dates, butterscotch sauce, clotted cream.</div>
+            </div>
+            <div class="mi-price">AED 38</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="sec sec-felt">
+  <div class="reveal">
+    <div class="stag">The Experience</div>
+    <h2 class="sh">Not Just a Café.<br><em>An Adventure.</em></h2>
+  </div>
+  <div class="exp-grid">
+    <div class="exp-card reveal">
+      <div class="exp-num">01</div>
+      <span class="exp-icon">🧙</span>
+      <div class="exp-title">Expert Game Masters</div>
+      <p class="exp-desc">Our trained Game Masters know every game in the vault. They'll teach you, referee disputes, and recommend your next obsession — on duty from 6pm daily.</p>
+    </div>
+    <div class="exp-card reveal">
+      <div class="exp-num">02</div>
+      <span class="exp-icon">🏆</span>
+      <div class="exp-title">Weekly Tournaments</div>
+      <p class="exp-desc">Every Friday at 8pm we run competitive tournaments. Catan, Ticket to Ride, Codenames — enter and win prizes, bragging rights, and free coffee.</p>
+    </div>
+    <div class="exp-card reveal">
+      <div class="exp-num">03</div>
+      <span class="exp-icon">🎉</span>
+      <div class="exp-title">Private Event Bookings</div>
+      <p class="exp-desc">Birthdays, team building, date nights or corporate events — book the whole venue or a private corner. Custom menus available.</p>
+    </div>
+    <div class="exp-card reveal">
+      <div class="exp-num">04</div>
+      <span class="exp-icon">☕</span>
+      <div class="exp-title">Artisan Coffee Bar</div>
+      <p class="exp-desc">Specialty coffee roasted in-house, alongside a full food menu. Eat well, drink well — because a long game session deserves proper fuel.</p>
+    </div>
+    <div class="exp-card reveal">
+      <div class="exp-num">05</div>
+      <span class="exp-icon">👨‍👩‍👧</span>
+      <div class="exp-title">All Ages Welcome</div>
+      <p class="exp-desc">Families, groups of friends, first dates, solo players. We have games for every age, skill level, and group size. No experience needed.</p>
+    </div>
+    <div class="exp-card reveal">
+      <div class="exp-num">06</div>
+      <span class="exp-icon">♿</span>
+      <div class="exp-title">Fully Accessible</div>
+      <p class="exp-desc">Wheelchair accessible, indoor seating, table-booking recommended. Street parking available outside. We've thought of everything.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING -->
+<section class="sec" id="booking" style="padding:0;">
+  <div class="booking-wrap">
+    <div class="booking-left">
+      <div class="stag">Reserve Your Spot</div>
+      <h2 class="sh">Book a <em>Table</em></h2>
+      <p class="ssub" style="margin-top:0.8rem;">Walk-ins welcome but tables fill up fast — especially on weekends. Book ahead to avoid disappointment.</p>
+
+      <div class="booking-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Your Name</label>
+            <input type="text" class="form-input" placeholder="Ahmed Al Rashid">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone / WhatsApp</label>
+            <input type="text" class="form-input" placeholder="+971 50 000 0000">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="bookDate">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Players</label>
+            <select class="form-select" id="guestCount" onchange="updateSummary()">
+              <option value="2">2 players</option>
+              <option value="3">3 players</option>
+              <option value="4" selected>4 players</option>
+              <option value="5">5 players</option>
+              <option value="6">6 players</option>
+              <option value="8">7–8 players</option>
+              <option value="10">9–10 players (large table)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Select a Time</label>
+          <div class="time-slots">
+            <div class="ts" onclick="selectTime(this,'6:00 PM')">6:00 PM</div>
+            <div class="ts" onclick="selectTime(this,'6:30 PM')">6:30 PM</div>
+            <div class="ts unavail">7:00 PM</div>
+            <div class="ts" onclick="selectTime(this,'7:30 PM')">7:30 PM</div>
+            <div class="ts unavail">8:00 PM</div>
+            <div class="ts" onclick="selectTime(this,'8:30 PM')">8:30 PM</div>
+            <div class="ts" onclick="selectTime(this,'9:00 PM')">9:00 PM</div>
+            <div class="ts" onclick="selectTime(this,'9:30 PM')">9:30 PM</div>
+            <div class="ts" onclick="selectTime(this,'10:00 PM')">10:00 PM</div>
+            <div class="ts" onclick="selectTime(this,'10:30 PM')">10:30 PM</div>
+            <div class="ts" onclick="selectTime(this,'11:00 PM')">11:00 PM</div>
+            <div class="ts unavail">11:30 PM</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Table Preference</label>
+          <div class="table-grid">
+            <div class="table-opt selected" onclick="selectTable(this,'Window Nook')">
+              <span class="to-emoji">🪟</span>
+              <div class="to-label">Window Nook</div>
+            </div>
+            <div class="table-opt" onclick="selectTable(this,'Centre Hall')">
+              <span class="to-emoji">🏛️</span>
+              <div class="to-label">Centre Hall</div>
+            </div>
+            <div class="table-opt" onclick="selectTable(this,'Private Booth')">
+              <span class="to-emoji">🛋️</span>
+              <div class="to-label">Private Booth</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Special Requests</label>
+          <textarea class="form-input" rows="2" placeholder="Birthday celebration, game suggestions, dietary requirements..." style="resize:vertical;"></textarea>
+        </div>
+
+        <button class="btn-amber" onclick="submitBooking()" style="margin-top:0.5rem;justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Confirm Reservation
+        </button>
+      </div>
+    </div>
+
+    <div class="booking-right">
+      <div class="stag">Your Booking</div>
+      <h2 class="sh" style="font-size:2rem;">Summary</h2>
+
+      <div class="order-summary" id="summary">
+        <div class="os-title">Reservation Details</div>
+        <div class="os-row"><span class="os-key">Venue</span><span class="os-val">The Roll & Brew</span></div>
+        <div class="os-row"><span class="os-key">Players</span><span class="os-val" id="sum-guests">4 players</span></div>
+        <div class="os-row"><span class="os-key">Time</span><span class="os-val" id="sum-time">— select time —</span></div>
+        <div class="os-row"><span class="os-key">Table</span><span class="os-val" id="sum-table">Window Nook</span></div>
+        <div class="os-row"><span class="os-key">Cover charge/person</span><span class="os-val">AED 35</span></div>
+        <div class="os-total">
+          <span class="os-total-key">Estimated Total</span>
+          <span class="os-total-val" id="sum-total">AED 140</span>
+        </div>
+      </div>
+
+      <div class="fee-note">
+        <p>The <strong>cover charge (AED 35/person)</strong> includes unlimited access to all 800+ games and a welcome drink of your choice. Food and additional drinks are charged separately. Cover charge is redeemable against your food & drink bill.</p>
+      </div>
+
+      <!-- Hours -->
+      <div style="margin-top:2rem;">
+        <div class="stag" style="margin-bottom:1rem;">Opening Hours</div>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+          <div style="display:flex;justify-content:space-between;font-size:0.88rem;padding-bottom:0.6rem;border-bottom:1px solid rgba(200,134,10,0.08);">
+            <span style="color:var(--muted-text);font-style:italic;">Monday – Thursday</span>
+            <span style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--parchment);">6:00 AM – 12:00 AM</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.88rem;padding-bottom:0.6rem;border-bottom:1px solid rgba(200,134,10,0.08);">
+            <span style="color:var(--muted-text);font-style:italic;">Friday</span>
+            <span style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--amber);">6:00 AM – 2:00 AM</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.88rem;padding-bottom:0.6rem;border-bottom:1px solid rgba(200,134,10,0.08);">
+            <span style="color:var(--muted-text);font-style:italic;">Saturday</span>
+            <span style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--amber);">6:00 AM – 2:00 AM</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.88rem;">
+            <span style="color:var(--muted-text);font-style:italic;">Sunday</span>
+            <span style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--parchment);">10:00 AM – 12:00 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:2rem;padding:1rem;border:1px solid rgba(200,134,10,0.15);background:rgba(200,134,10,0.03);">
+        <p style="font-size:0.82rem;color:var(--muted-text);font-style:italic;">Prefer to book via WhatsApp? Message us directly and we'll confirm within minutes.</p>
+        <a href="https://wa.me/971504840410?text=Hi%2C%20I'd%20like%20to%20book%20a%20table%20at%20The%20Roll%20%26%20Brew" target="_blank" style="display:inline-flex;align-items:center;gap:8px;margin-top:0.8rem;font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#25D366;text-decoration:none;">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.829L0 24l6.335-1.48A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.003-1.371l-.36-.213-3.76.877.93-3.641-.234-.374A9.818 9.818 0 012.182 12C2.182 6.578 6.578 2.182 12 2.182S21.818 6.578 21.818 12 17.422 21.818 12 21.818z"/></svg>
+          Book on WhatsApp →
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="sec-parchment sec" id="reviews">
+  <div class="reveal" style="position:relative;z-index:1;">
+    <div class="stag" style="color:var(--rust);">What Players Say</div>
+    <h2 class="sh sh-dark">1,224 <em>Happy</em> Adventurers</h2>
+    <p class="ssub ssub-dark">Real reviews from real regulars — the people who keep coming back for one more game.</p>
+  </div>
+  <div class="test-grid" style="position:relative;z-index:1;">
+    <div class="test-card reveal">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-text">"Came for one game, stayed for four hours. The Game Master recommended Pandemic and we were hooked. The lava cake almost didn't survive the last round."</p>
+      <div class="test-author">
+        <div class="test-av">NJ</div>
+        <div><div class="test-name">Noor J.</div><div class="test-role">Regular every Friday</div></div>
+      </div>
+    </div>
+    <div class="test-card reveal">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-text">"Took our whole team here for a team building night. Best decision we ever made. The staff know every game and the food was genuinely incredible. Private booth was perfect."</p>
+      <div class="test-author">
+        <div class="test-av">KS</div>
+        <div><div class="test-name">Khalid S.</div><div class="test-role">Corporate booking</div></div>
+      </div>
+    </div>
+    <div class="test-card reveal">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-text">"First date here was a great idea — you never run out of things to talk about when you're playing Dixit. The Karak is the best in Sharjah. Already booked our second visit."</p>
+      <div class="test-author">
+        <div class="test-av">LA</div>
+        <div><div class="test-name">Layla A.</div><div class="test-role">Date night regular</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT + MAP -->
+<section id="contact">
+  <div class="contact-wrap">
+    <div class="contact-info">
+      <div class="stag">Find the Tavern</div>
+      <h2 class="sh">Come <em>Play</em></h2>
+      <div class="c-items">
+        <div class="c-item">
+          <div class="c-icon-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><div class="c-label">Address</div><div class="c-value">Mercure Hotel, Sheikh Zayed Road<br>Al Barsha 3, Dubai, UAE</div></div>
+        </div>
+        <div class="c-item">
+          <div class="c-icon-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.09-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg></div>
+          <div><div class="c-label">Phone</div><div class="c-value">+971 4 333 1111</div></div>
+        </div>
+        <div class="c-item">
+          <div class="c-icon-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div><div class="c-label">Hours</div><div class="c-value">Mon–Thu: 6am–midnight<br>Fri–Sat: 6am–2am · Sun: 10am–midnight</div></div>
+        </div>
+        <div class="c-item">
+          <div class="c-icon-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div><div class="c-label">Email</div><div class="c-value">play@rollandbrew.ae</div></div>
+        </div>
+      </div>
+      <div class="c-btns">
+        <a href="https://wa.me/971504840410?text=Hi%2C%20I'd%20like%20to%20book%20at%20The%20Roll%20%26%20Brew" target="_blank" class="wa-btn">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.829L0 24l6.335-1.48A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.003-1.371l-.36-.213-3.76.877.93-3.641-.234-.374A9.818 9.818 0 012.182 12C2.182 6.578 6.578 2.182 12 2.182S21.818 6.578 21.818 12 17.422 21.818 12 21.818z"/></svg>
+          Book on WhatsApp
+        </a>
+        <a href="tel:+97143331111" class="call-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.09-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg>
+          Call Us
+        </a>
+      </div>
+    </div>
+    <div class="map-right">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3613.4!2d55.1854!3d25.1124!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f6b3c9e7f0001%3A0x1!2sMercure+Hotel+Dubai+Barsha+Heights!5e0!3m2!1sen!2sae!4v1"
+        allowfullscreen="" loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="The Roll & Brew — Al Barsha, Dubai">
+      </iframe>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="footer-logo">The Roll & Brew™</a>
+  <ul class="footer-links">
+    <li><a href="#games">Games</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#booking">Book</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <p class="footer-copy">© 2025 The Roll & Brew. May your dice roll true.</p>
+</footer>
+
+<!-- FLOATING WA -->
+<a href="https://wa.me/971504840410?text=Hi%2C%20I'd%20like%20to%20book%20a%20table%20at%20The%20Roll%20%26%20Brew!" target="_blank" class="wa-float" aria-label="WhatsApp The Roll & Brew">
+  <svg width="26" height="26" fill="white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.508 5.829L0 24l6.335-1.48A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 01-5.003-1.371l-.36-.213-3.76.877.93-3.641-.234-.374A9.818 9.818 0 012.182 12C2.182 6.578 6.578 2.182 12 2.182S21.818 6.578 21.818 12 17.422 21.818 12 21.818z"/></svg>
+</a>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+});
+document.querySelectorAll('a,button,.game-card,.menu-card,.ts,.table-opt,.gf,.mn-item').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.style.transform = 'translate(-50%,-50%) scale(2)');
+  el.addEventListener('mouseleave', () => cursor.style.transform = 'translate(-50%,-50%) scale(1)');
+});
+
+// Scroll reveal
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 90);
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => revealObs.observe(el));
+
+// Game filter
+function filterGames(cat, btn) {
+  document.querySelectorAll('.gf').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.game-card').forEach(c => {
+    if (cat === 'all' || c.dataset.cat === cat) c.classList.remove('hidden');
+    else c.classList.add('hidden');
+  });
+}
+
+// Menu tabs
+function showMenu(panel, el) {
+  document.querySelectorAll('.mn-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.menu-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('menu-' + panel).classList.add('active');
+}
+
+// Time slot selection
+let selectedTime = '';
+function selectTime(el, time) {
+  document.querySelectorAll('.ts:not(.unavail)').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTime = time;
+  document.getElementById('sum-time').textContent = time;
+  updateSummary();
+}
+
+// Table selection
+let selectedTable = 'Window Nook';
+function selectTable(el, table) {
+  document.querySelectorAll('.table-opt').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTable = table;
+  document.getElementById('sum-table').textContent = table;
+  updateSummary();
+}
+
+// Summary update
+function updateSummary() {
+  const guests = parseInt(document.getElementById('guestCount').value);
+  const total = guests * 35;
+  document.getElementById('sum-guests').textContent = guests + ' player' + (guests > 1 ? 's' : '');
+  document.getElementById('sum-total').textContent = 'AED ' + total;
+}
+
+// Booking submit
+function submitBooking() {
+  const guests = document.getElementById('guestCount').value;
+  const date = document.getElementById('bookDate').value;
+  if (!selectedTime) { alert('Please select a time slot.'); return; }
+  const msg = encodeURIComponent(`Hi! I'd like to book a table at The Roll & Brew.\n\nPlayers: ${guests}\nDate: ${date || 'TBD'}\nTime: ${selectedTime}\nTable: ${selectedTable}\n\nPlease confirm!`);
+  window.open('https://wa.me/971504840410?text=' + msg, '_blank');
+}
+
+// Set today as default date
+document.getElementById('bookDate').valueAsDate = new Date();
+</script>
+</body>
+</html>
